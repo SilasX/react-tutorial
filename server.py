@@ -14,6 +14,7 @@ from flask import Flask, Response, request
 
 app = Flask(__name__, static_url_path='', static_folder='public')
 app.add_url_rule('/', 'root', lambda: app.send_static_file('index.html'))
+app.config["CACHE_TYPE"] = "null"
 
 @app.route('/comments.json', methods=['GET', 'POST'])
 def comments_handler():

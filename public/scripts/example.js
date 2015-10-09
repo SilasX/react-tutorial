@@ -1,122 +1,74 @@
-/**
- * This file provided by Facebook is for non-commercial testing and evaluation
- * purposes only. Facebook reserves all rights not expressly granted.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * FACEBOOK BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+var Image = React.createClass({
+  /*componentDidMount: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'image/jpeg',
+      cache: true,
+      success: function(data) {
+        this.setState({imageRawData: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },*/
 
-var Comment = React.createClass({
   render: function() {
-    var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
     return (
-      <div className="comment">
-        <h2 className="commentAuthor">
-          {this.props.author}
-        </h2>
-        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+      <div>
+        <div>
+          The image I see is&nbsp;
+          <a href={this.props.url}>here</a> and looks like this:
+        </div>
+        <div>
+          <img 
+            className="some-image"
+            src={this.props.url}
+          />
+        </div>
       </div>
     );
   }
 });
 
-var CommentBox = React.createClass({
-  loadCommentsFromServer: function() {
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      cache: false,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
-  },
-  handleCommentSubmit: function(comment) {
-    var comments = this.state.data;
-    var newComments = comments.concat([comment]);
-    this.setState({data: newComments});
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      type: 'POST',
-      data: comment,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
-  },
+var ImageApp = React.createClass({
   getInitialState: function() {
-    return {data: []};
+    return {
+      imgUrls: []
+    };
   },
-  componentDidMount: function() {
-    this.loadCommentsFromServer();
-    setInterval(this.loadCommentsFromServer, this.props.pollInterval);
-  },
-  render: function() {
-    return (
-      <div className="commentBox">
-        <h1>Comments</h1>
-        <CommentList data={this.state.data} />
-        <CommentForm onCommentSubmit={this.handleCommentSubmit} />
-      </div>
-    );
-  }
-});
 
-var CommentList = React.createClass({
+  componentDidMount: function() {
+    $.ajax({
+      method: "GET",
+      url: this.props.source,
+      cache: false,
+      success: function(result) {
+        if (this.isMounted()) {
+          this.setState({
+            imgUrls: result
+          });
+        }
+      }.bind(this)
+    });
+  },
+
   render: function() {
-    var commentNodes = this.props.data.map(function(comment, index) {
+    var imageNodes = this.state.imgUrls.map(function (imgUrl) {
       return (
-        // `key` is a React-specific concept and is not mandatory for the
-        // purpose of this tutorial. if you're curious, see more here:
-        // http://facebook.github.io/react/docs/multiple-components.html#dynamic-children
-        <Comment author={comment.author} key={index}>
-          {comment.text}
-        </Comment>
+        <Image url={imgUrl} key={imgUrl}>
+        </Image>
       );
     });
     return (
-      <div className="commentList">
-        {commentNodes}
+      <div className="imageApp">
+        {imageNodes}
       </div>
-    );
-  }
-});
-
-var CommentForm = React.createClass({
-  handleSubmit: function(e) {
-    e.preventDefault();
-    var author = React.findDOMNode(this.refs.author).value.trim();
-    var text = React.findDOMNode(this.refs.text).value.trim();
-    if (!text || !author) {
-      return;
-    }
-    this.props.onCommentSubmit({author: author, text: text});
-    React.findDOMNode(this.refs.author).value = '';
-    React.findDOMNode(this.refs.text).value = '';
-  },
-  render: function() {
-    return (
-      <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input type="text" placeholder="Your name" ref="author" />
-        <input type="text" placeholder="Say something..." ref="text" />
-        <input type="submit" value="Post" />
-      </form>
     );
   }
 });
 
 React.render(
-  <CommentBox url="comments.json" pollInterval={2000} />,
+  <ImageApp source="/data/cachelink.json" />,
   document.getElementById('content')
 );
